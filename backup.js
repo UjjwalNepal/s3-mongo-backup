@@ -71,6 +71,11 @@ function AWSSetup(config) {
     return new AWS.S3();
 }
 
+function SetUpVultr(config){
+    const vultrEndPoint = new AWS.Endpoint("https://ewr1.vultrobjects.com")
+    return new AWS.S3({endpoint: vultrEndPoint, accessKeyId: config.s3.accessKey, secretAccessKey: config.s3.secretKey})
+}
+
 // Gets current time If Timezoneoffset is provided, then it'll get time in that
 // time zone If no timezone is provided, then it gives UTC Time
 function currentTime(timezoneOffset) {
@@ -267,7 +272,12 @@ function UploadFileToS3(S3, ZIP_NAME, config) {
 }
 
 function UploadBackup(config, backupResult) {
-    let s3 = AWSSetup(config);
+    if(config.vultr){
+        let s3 = SetUpVultr(config);
+    }else{
+        let s3 = AWSSetup(config);
+    }
+    
 
     return UploadFileToS3(s3, backupResult.zipName, config).then(uploadFileResult => {
         return Promise.resolve(uploadFileResult);
