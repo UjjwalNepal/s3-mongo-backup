@@ -272,10 +272,11 @@ function UploadFileToS3(S3, ZIP_NAME, config) {
 }
 
 function UploadBackup(config, backupResult) {
+    var s3 = null
     if(config.vultr){
-        let s3 = SetUpVultr(config);
+         s3 = SetUpVultr(config);
     }else{
-        let s3 = AWSSetup(config);
+         s3 = AWSSetup(config);
     }
     
 
