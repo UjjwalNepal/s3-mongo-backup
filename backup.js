@@ -22,7 +22,7 @@ function ValidateConfig(config) {
         if (typeof config.mongodb == "string") {
             mongodb = MongodbURI.parse(config.mongodb);
         } else {
-            if (config.mongodb.database && config.mongodb.host && config.mongodb.port) {
+            if (config.mongodb.database && config.mongodb.host && (config.mongodb.port || config.mongodb.type == "Atlas")) {
 
                 mongodb = {
                     scheme: 'mongodb',
@@ -31,6 +31,7 @@ function ValidateConfig(config) {
                     database: config.mongodb.database,
                     ssl: config.mongodb.ssl,
                     authenticationDatabase: config.mongodb.authenticationDatabase,
+                    type: config.mongodb.type || null,
                     hosts: [{
                         host: config.mongodb.host,
                         port: config.mongodb.port
@@ -100,16 +101,23 @@ function BackupMongoDatabase(config) {
             host = config.mongodb.hosts[0].host || null,
             port = config.mongodb.hosts[0].port || null,
             ssl = config.mongodb.ssl || null,
+            type = config.mongodb.type || null,
             authenticationDatabase = config.mongodb.authenticationDatabase || null;
 
         let DB_BACKUP_NAME = `${database}_${currentTime(timezoneOffset)}.gz`;
+
 
         // Default command, does not considers username or password
         let command = `mongodump -h ${host} --port=${port} -d ${database} --quiet --gzip --archive=${BACKUP_PATH(DB_BACKUP_NAME)}`;
 
         // When Username and password is provided
         if (username && password) {
-            command = `mongodump -h ${host} --port=${port} -d ${database} -p ${password} -u ${username} --quiet --gzip --archive=${BACKUP_PATH(DB_BACKUP_NAME)}`;
+            if(type){
+                command = `mongodump --uri mongodb+srv://${username}:${password}@${host}/${database} --quiet --gzip --archive=${BACKUP_PATH(DB_BACKUP_NAME)}`
+            }else{
+                command = `mongodump -h ${host} --port=${port} -d ${database} -p ${password} -u ${username} --quiet --gzip --archive=${BACKUP_PATH(DB_BACKUP_NAME)}`;
+            }
+            
         }
         // When Username is provided
         if (username && !password) {
